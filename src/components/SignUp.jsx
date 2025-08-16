@@ -1,32 +1,40 @@
 import React, { useState } from "react";
-import { CognitoUserAttribute } from "amazon-cognito-identity-js";
-import { getUserPool } from "../cognito";
+import { CognitoUserPool, CognitoUserAttribute } from "amazon-cognito-identity-js";
+import "./SignUp.css";
 
-export default function SignUp({ cfg }) {
-  const pool = getUserPool(cfg);
+const SignUp = ({ config }) => {
   const [form, setForm] = useState({
-    email: "",
-    password: "",
     given_name: "",
     family_name: "",
+    email: "",
+    password: "",
     phone_number: "",
     gender: "",
     purpose: "",
     organization: "",
     country: ""
   });
+
   const [msg, setMsg] = useState("");
 
-  const onChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const cognitoLoginUrl = `https://${config.userPoolDomain}.auth.${config.region}.amazoncognito.com/login?response_type=code&client_id=${config.clientId}&redirect_uri=${encodeURIComponent(config.redirectUri)}`;
 
-  const submit = (e) => {
+  const onChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const onSubmit = (e) => {
     e.preventDefault();
-    setMsg("");
 
-    const attrs = [
-      new CognitoUserAttribute({ Name: "email", Value: form.email }),
+    const userPool = new CognitoUserPool({
+      UserPoolId: config.userPoolId,
+      ClientId: config.clientId
+    });
+
+    const attributeList = [
       new CognitoUserAttribute({ Name: "given_name", Value: form.given_name }),
       new CognitoUserAttribute({ Name: "family_name", Value: form.family_name }),
+      new CognitoUserAttribute({ Name: "email", Value: form.email }),
       new CognitoUserAttribute({ Name: "phone_number", Value: form.phone_number }),
       new CognitoUserAttribute({ Name: "gender", Value: form.gender }),
       new CognitoUserAttribute({ Name: "custom:purpose", Value: form.purpose }),
@@ -34,34 +42,86 @@ export default function SignUp({ cfg }) {
       new CognitoUserAttribute({ Name: "custom:country", Value: form.country })
     ];
 
-    pool.signUp(form.email, form.password, attrs, null, (err, data) => {
+    userPool.signUp(form.email, form.password, attributeList, null, (err) => {
       if (err) {
-        setMsg(err.message || JSON.stringify(err));
+        if (err.code === "UsernameExistsException") {
+          setMsg("⚠️ An account with this email already exists. Please sign in.");
+        } else {
+          setMsg(err.message || "Something went wrong. Please try again.");
+        }
         return;
       }
-      setMsg(
-        "Sign up successful. Please check your email to verify your account, then sign in."
-      );
-      console.log("signUp result:", data);
+      setMsg("✅ Sign up successful. Please check your email/SMS for verification.");
+      // Optional: redirect to Cognito login
+      // window.location.href = cognitoLoginUrl;
     });
-  };
+  }; // <-- IMPORTANT: close onSubmit before return
 
   return (
-    <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
-      <input name="email" placeholder="Email" value={form.email} onChange={onChange} required />
-      <input name="password" type="password" placeholder="Password" value={form.password} onChange={onChange} required />
+    <div className="signup-container">
+      <header className="brand">
+        <h1>DEA Sandbox – Sign Up</h1>
+      </header>
 
-      <input name="given_name" placeholder="First name" value={form.given_name} onChange={onChange} required />
-      <input name="family_name" placeholder="Last name" value={form.family_name} onChange={onChange} required />
-      <input name="phone_number" placeholder="Phone (+12025550123)" value={form.phone_number} onChange={onChange} required />
-      <label> Gender: <select name="gender" value={form.gender} onChange={onChange} required> <option value="">Select Gender</option> <option value="Male">Male</option> <option value="Female">Female</option> <option value="Other">Other</option> <option value="Prefer not to say">Prefer not to say</option> </select> </label>
+      <form onSubmit={onSubmit} className="signup-form">
+        <label>First Name</label>
+        <input name="given_name" value={form.given_name} onChange={onChange} required />
 
-      <input name="purpose" placeholder="Purpose" value={form.purpose} onChange={onChange} required />
-      <input name="organization" placeholder="Organization" value={form.organization} onChange={onChange} required />
-      <input name="country" placeholder="Country" value={form.country} onChange={onChange} required />
+        <label>Last Name</label>
+        <input name="family_name" value={form.family_name} onChange={onChange} required />
 
-      <button type="submit">Create account</button>
-      {msg && <div style={{ whiteSpace: "pre-wrap", color: "#333" }}>{msg}</div>}
-    </form>
+        <label>Email</label>
+        <input type="email" name="email" value={form.email} onChange={onChange} required />
+
+        <label>Password</label>
+        <input
+          type="password"
+          name="password"
+          value={form.password}
+          onChange={onChange}
+          required
+          minLength={8}
+        />
+
+        <label>Phone Number</label>
+        <input
+          type="tel"
+          name="phone_number"
+          placeholder="+12025550123"
+          value={form.phone_number}
+          onChange={onChange}
+          required
+          pattern="^\+[1-9]\d{1,14}$"
+          title="Enter a valid phone number in E.164 format, e.g. +12025550123"
+        />
+
+        <label>Gender</label>
+        <select name="gender" value={form.gender} onChange={onChange} required>
+          <option value="">Select</option>
+          <option value="male">Male</option>
+          <option value="female">Female</option>
+          <option value="other">Other</option>
+        </select>
+
+        <label>Purpose</label>
+        <input name="purpose" value={form.purpose} onChange={onChange} required />
+
+        <label>Organization</label>
+        <input name="organization" value={form.organization} onChange={onChange} required />
+
+        <label>Country</label>
+        <input name="country" value={form.country} onChange={onChange} required />
+
+        <button type="submit">Sign Up</button>
+      </form>
+
+      {msg && <p className="message">{msg}</p>}
+
+      <p className="signin-link">
+        Already have an account? <a href={cognitoLoginUrl}>Sign In here</a>
+      </p>
+    </div>
   );
-}
+};
+
+export default SignUp;
