@@ -1,7 +1,7 @@
 :root {
     --brand: #336699;      /* DEA primary */
     --accent: #4CAF50;     /* action/confirm */
-    --bg: #f7fafc;
+    --bg: #949494;
     --text: #1f2937;
     --muted: #6b7280;
     --border: #d1d5db;
@@ -23,7 +23,7 @@
     gap: 12px;
     margin: 32px 0 16px;
   }
-  .brand img { height: 48px; }
+  .brand img { max-height: 100px; width: auto; }
   .brand h1 {
     margin: 0;
     font-size: 20px;
@@ -38,7 +38,7 @@
   }
   
   .card {
-    background: #fff;
+    background: #f7faff;
     border-radius: 16px;
     box-shadow: 0 12px 32px rgba(0,0,0,0.06);
     padding: 24px;
