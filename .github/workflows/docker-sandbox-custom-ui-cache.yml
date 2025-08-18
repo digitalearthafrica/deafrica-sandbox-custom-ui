@@ -1,0 +1,49 @@
+name : Build and Push
+
+env:
+  IMAGE_NAME: digitalearthafrica/deafrica-sandox-custom-ui
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  release:
+    types:
+      - created
+
+jobs:
+  push:
+    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DEAFRICA_DOCKER_USERNAME }}
+          password: ${{ secrets.DEAFRICA_DOCKER_PASSWORD }}
+
+      - name: Get version number for tagging the image
+        run: |
+          # figure out extra tag
+          git fetch --prune --unshallow 2> /dev/null || true
+          TAG=$(git describe --tags)
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:latest,${{ env.IMAGE_NAME }}:${{ env.TAG }}
