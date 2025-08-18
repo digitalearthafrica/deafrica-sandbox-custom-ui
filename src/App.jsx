@@ -31,7 +31,7 @@ export default function App() {
         </header>
         <main>
           <Routes>
-            <Route path="/" element={<SignUp cfg={cfg} />} />
+            <Route path="/signup" element={<SignUp cfg={cfg} />} />
           </Routes>
         </main>
         <footer>
