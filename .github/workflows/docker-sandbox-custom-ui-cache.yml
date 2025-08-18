@@ -1,4 +1,4 @@
-name : Build and Push
+name: Build and Push
 
 env:
   IMAGE_NAME: digitalearthafrica/deafrica-sandox-custom-ui
@@ -14,7 +14,6 @@ on:
 
 jobs:
   push:
-    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -36,9 +35,12 @@ jobs:
 
       - name: Get version number for tagging the image
         run: |
-          # figure out extra tag
-          git fetch --prune --unshallow 2> /dev/null || true
-          TAG=$(git describe --tags)
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            TAG=${{ github.sha }}
+          else
+            git fetch --prune --unshallow 2> /dev/null || true
+            TAG=$(git describe --tags)
+          fi
           echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Build and push
@@ -46,4 +48,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.IMAGE_NAME }}:latest,${{ env.IMAGE_NAME }}:${{ env.TAG }}
+          tags: |
+            ${{ github.event_name == 'pull_request' && format('{0}:{1}', env.IMAGE_NAME, env.TAG) || format('{0}:latest,{0}:{1}', env.IMAGE_NAME, env.TAG) }}
