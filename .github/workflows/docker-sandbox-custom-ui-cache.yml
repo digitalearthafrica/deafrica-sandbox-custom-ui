@@ -36,7 +36,9 @@ jobs:
       - name: Get version number for tagging the image
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            TAG=${{ github.sha }}
+            LAST_TAG=$(git describe --tags --abbrev=0)
+            SHORT_COMMIT=${{ github.sha }}
+            TAG="${LAST_TAG}-${SHORT_COMMIT:0:7}"
           else
             git fetch --prune --unshallow 2> /dev/null || true
             TAG=$(git describe --tags)
