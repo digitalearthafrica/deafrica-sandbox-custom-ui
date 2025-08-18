@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import SignUp from "./components/SignUp";
-import "./styles.css";
+import logo from './assets/DE_Africa_Logo_Primary_RGB_1.png';
+import './App.css';
 
 export default function App() {
   const [cfg, setCfg] = useState(null);
@@ -12,24 +14,32 @@ export default function App() {
       const json = await res.json();
       setCfg(json);
     }
-    load().catch(console.error);
+    load().catch((e) => console.error(e));
   }, []);
 
   if (!cfg) return <div style={{ padding: 24 }}>Loading…</div>;
 
   return (
-    <div className="page">
-      <header className="brand">
-        <img src="/dea-logo.png" alt="DEA logo" />
-      </header>
-
-      <div className="card">
-        <SignUp config={cfg} />
+    <Router>
+      <div className="app">
+        <header>
+          <img src={logo} alt="Digital Earth Africa" />
+          <nav>
+            <a href="https://digitalearthafrica.org/" target="_blank" rel="noopener noreferrer">Home</a>
+            <a href="https://docs.digitalearthafrica.org/" target="_blank" rel="noopener noreferrer">User Guide</a>
+          </nav>
+        </header>
+        <main>
+          <Routes>
+            <Route path="/" element={<SignUp cfg={cfg} />} />
+          </Routes>
+        </main>
+        <footer>
+          <p>
+            © Digital Earth Africa | <a href="https://docs.digitalearthafrica.org/en/latest/sandbox/termsconditions.html" target="_blank" rel="noopener noreferrer">Terms and Conditions</a>
+          </p>
+        </footer>
       </div>
-
-      <p className="helper" style={{ marginTop: 16 }}>
-        By continuing, you agree to our acceptable use policy.
-      </p>
-    </div>
+    </Router>
   );
 }
