@@ -8,9 +8,11 @@ const SignUp = ({ cfg }) => {
   const [givenName, setGivenName] = useState('');
   const [familyName, setFamilyName] = useState('');
   const [gender, setGender] = useState('');
+  const [ageCategory, setAgeCategory] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [organisation, setOrganisation] = useState('');
-  const [purpose, setPurpose] = useState('');
+  const [organisationType, setOrganisationType] = useState('');
+  const [thematicInterest, setThematicInterest] = useState('');
   const [country, setCountry] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -32,7 +34,7 @@ const SignUp = ({ cfg }) => {
     setSuccess('');
 
     // Validate inputs
-    if (!email || !password || !givenName || !familyName || !organisation || !purpose || !country) {
+    if (!email || !password || !givenName || !familyName || !organisation || !gender || !ageCategory || !phoneNumber || !organisation || !organisationType || !thematicInterest || !country) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -41,9 +43,11 @@ const SignUp = ({ cfg }) => {
       { Name: 'given_name', Value: givenName },
       { Name: 'family_name', Value: familyName },
       { Name: 'gender', Value: gender },
+      { Name: 'custom:age_category', Value: ageCategory },
       { Name: 'phone_number', Value: phoneNumber },
       { Name: 'custom:organization', Value: organisation },
-      { Name: 'custom:purpose', Value: purpose },
+      { Name: 'custom:organization_type', Value: organisationType },
+      { Name: 'custom:thematic_interest', Value: thematicInterest },
       { Name: 'custom:country', Value: country },
     ];
 
@@ -58,12 +62,52 @@ const SignUp = ({ cfg }) => {
 
   // Options for Gender dropdown
   const genderOptions = [
-    { value: '', label: 'Select Gender' },
+    { value: '', label: 'Select gender' },
     { value: 'Male', label: 'Male' },
     { value: 'Female', label: 'Female' },
     { value: 'Prefer not to say', label: 'Prefer not to say' },
   ];
 
+  // Options for Age category
+  const ageCategoryOptions = [
+    { value: '', label: 'Select age category' },
+    { value: '10-15', label: '10-15' },
+    { value: '16-20', label: '16-20' },
+    { value: '21-30', label: '21-30' },
+    { value: '31-40', label: '31-40' },
+    { value: '41-50', label: '41-50' },
+    { value: '51-60', label: '51-60' },
+    { value: '61-70', label: '61-70' },
+    { value: '71-80', label: '71-80' },
+    { value: '81+', label: '81+' },
+  ];
+
+
+  // Options for organisation type
+  const organisationTypeOptions = [
+    { value: '', label: 'Select organisation type' },
+    { value: 'Academia', label: 'Academia' },
+    { value: 'Government', label: 'Government' },
+    { value: 'Individual', label: 'Individual' },
+    { value: 'NGO', label: 'NGO' },
+    { value: 'Private sector', label: 'Private sector' },
+    { value: 'Other', label: 'Other' },
+  ];
+
+  // Options for thematic interest
+  const thematicInterestOptions = [
+    { value: '', label: 'Select thematic interest' },
+    { value: 'Agriculture', label: 'Agriculture' },
+    { value: 'Coastal erosion', label: 'Coastal erosion' },
+    { value: 'Forestry', label: 'Forestry' },
+    { value: 'Land degradation', label: 'Land degradation' },
+    { value: 'Mining', label: 'Mining' },
+    { value: 'Urban', label: 'Urban' },
+    { value: 'Water resources', label: 'Water resources' },
+    { value: 'Other', label: 'Other' },
+  ];
+
+  // Options for Country dropdown
   const countryOptions = [
     { value: '', label: 'Select Country' },
     { value: 'Afghanistan', label: 'Afghanistan' },
@@ -285,12 +329,34 @@ const SignUp = ({ cfg }) => {
             </option>
           ))}
         </select>
+        <label>Age Category *</label>
+        <select value={ageCategory} onChange={(e) => setAgeCategory(e.target.value)} required>
+          {ageCategoryOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
         <label>Phone Number</label>
-        <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+441234567890" />
+        <input type="tel" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} placeholder="+441234567890" required />
         <label>Organisation *</label>
         <input type="text" value={organisation} onChange={(e) => setOrganisation(e.target.value)} required />
-        <label>Purpose *</label>
-        <input type="text" value={purpose} onChange={(e) => setPurpose(e.target.value)} required />
+        <label>Organisation Type *</label>
+        <select value={organisationType} onChange={(e) => setOrganisationType(e.target.value)} required>
+          {organisationTypeOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+        <label>Thematic Interest *</label>
+        <select value={thematicInterest} onChange={(e) => setThematicInterest(e.target.value)} required>
+          {thematicInterestOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
         <label>Country *</label>
         <select value={country} onChange={(e) => setCountry(e.target.value)} required>
           {countryOptions.map((option) => (

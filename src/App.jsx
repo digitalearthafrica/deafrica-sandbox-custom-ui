@@ -26,6 +26,7 @@ export default function App() {
           <img src={logo} alt="Digital Earth Africa" />
           <nav>
             <a href="https://digitalearthafrica.org/" target="_blank" rel="noopener noreferrer">Home</a>
+            <a href={ cfg.sandboxUrl } target="_blank" rel="noopener noreferrer">Sandbox</a>
             <a href="https://docs.digitalearthafrica.org/" target="_blank" rel="noopener noreferrer">User Guide</a>
           </nav>
         </header>
