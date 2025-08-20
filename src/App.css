@@ -278,3 +278,32 @@ footer a:hover {
     margin-right: 10px;
   }
 }
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  margin-left: 5px;
+  cursor: help;
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  width: 200px;
+  background-color: var(--text-dark);
+  color: var(--text-light);
+  text-align: center;
+  border-radius: 4px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1000;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}

@@ -470,7 +470,16 @@ const SignUp = ({ cfg }) => {
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
             <div className="form-group">
-              <label>Phone Number *</label>
+              <label>
+                Phone Number *
+                <span className="tooltip">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
+                    <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                    <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
+                  </svg>
+                  <span className="tooltip-text">Enter your phone number in E.164 format (e.g., +441234567890). The phone number will be used for multi-factor authentication.</span>
+                </span>
+              </label>
               <input
                 type="tel"
                 value={phoneNumber}
@@ -504,7 +513,7 @@ const SignUp = ({ cfg }) => {
           <h3>Interests and Location</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label>Thematic Interest * (Select one or more)</label>
+              <label>Thematic Interest *</label>
               <Select
                 isMulti
                 options={thematicInterestOptions}
@@ -517,7 +526,7 @@ const SignUp = ({ cfg }) => {
               />
             </div>
             <div className="form-group">
-              <label>Country * (Select one or more)</label>
+              <label>Country *</label>
               <Select
                 isMulti
                 options={countryOptions}
