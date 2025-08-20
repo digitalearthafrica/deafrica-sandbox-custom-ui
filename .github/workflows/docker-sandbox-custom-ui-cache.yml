@@ -1,7 +1,7 @@
 name: Build and Push
 
 env:
-  IMAGE_NAME: digitalearthafrica/deafrica-sandox-custom-ui
+  IMAGE_NAME: digitalearthafrica/deafrica-sandbox-custom-ui
 
 on:
   pull_request:
