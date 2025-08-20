@@ -1,6 +1,6 @@
 :root {
-  --primary-green: #00A651; /* Main accent, inspired by African nature */
-  --secondary-blue: #007BFF; /* Links and secondary buttons */
+  --primary-green: #006666; /* Main accent, inspired by African nature */
+  --secondary-blue: #336699; /* Links and secondary buttons */
   --background: #FFFFFF; /* White for clean background */
   --light-grey: #F8F9FA; /* Light grey for form background */
   --text-dark: #333333; /* Body text */
@@ -125,14 +125,82 @@ select {
 
 select:focus, input:focus {
   outline: none;
-  border-color: var(--primary-green);
-  box-shadow: 0 0 5px rgba(0, 166, 81, 0.3);
+  border-color: var(--primary-green); /* Green focus border for standard inputs/selects */
+  box-shadow: 0 0 5px rgba(0, 102, 102, 0.3); /* Green shadow */
+}
+
+/* Styles for react-select */
+.multi-select .select__control {
+  width: 100%;
+  padding: 2px;
+  border: 1px solid var(--border-grey);
+  border-radius: 4px;
+  font-size: 16px;
+  min-height: 40px; /* Match height of other inputs */
+  box-shadow: none;
+  background-color: #FFFFFF;
+  font-family: var(--body-font);
+}
+
+.multi-select .select__control--is-focused {
+  border: 1px solid var(--primary-green) !important; /* Green focus border with higher specificity */
+  box-shadow: 0 0 5px rgba(0, 102, 102, 0.3) !important; /* Green shadow */
+  outline: none;
+}
+
+.multi-select .select__menu {
+  z-index: 1000;
+  border-radius: 4px;
+  border: 1px solid var(--border-grey);
+  background-color: #FFFFFF;
+}
+
+.multi-select .select__option {
+  font-size: 16px;
+  padding: 10px;
+}
+
+.multi-select .select__option--is-focused {
+  background-color: var(--light-grey);
+}
+
+.multi-select .select__option--is-selected {
+  background-color: var(--primary-green);
+  color: var(--text-light);
+}
+
+.multi-select .select__multi-value {
+  background-color: var(--primary-green);
+  border-radius: 4px;
+  color: var(--text-light);
+  padding: 2px 6px;
+  margin: 2px;
+}
+
+.multi-select .select__multi-value__label {
+  color: var(--text-light);
+  font-size: 14px;
+}
+
+.multi-select .select__multi-value__remove {
+  cursor: pointer;
+  color: var(--text-light);
+}
+
+.multi-select .select__multi-value__remove:hover {
+  background-color: #005555; /* Darker green on hover */
+  color: var(--text-light);
+}
+
+.multi-select .select__placeholder {
+  color: #999999;
+  font-size: 16px;
 }
 
 button {
   width: 100%;
   padding: 10px;
-  background-color: var(--primary-green);
+  background-color: var(--secondary-blue);
   color: var(--text-light);
   border: none;
   border-radius: 4px;
@@ -143,7 +211,7 @@ button {
 }
 
 button:hover {
-  background-color: #008F4A; /* Darker green for hover */
+  background-color: #004488; /* Darker blue for hover */
 }
 
 button:disabled {

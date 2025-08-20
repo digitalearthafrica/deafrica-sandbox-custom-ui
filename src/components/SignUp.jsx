@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
+import { useNavigate } from 'react-router-dom';
+import Select from 'react-select';
 
 const SignUp = ({ cfg }) => {
   const [email, setEmail] = useState('');
@@ -11,28 +13,42 @@ const SignUp = ({ cfg }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [organisation, setOrganisation] = useState('');
   const [organisationType, setOrganisationType] = useState('');
-  const [thematicInterest, setThematicInterest] = useState('');
-  const [country, setCountry] = useState('');
+  const [thematicInterest, setThematicInterest] = useState([]);
+  const [country, setCountry] = useState([]);
   const [sourceOfReferral, setSourceOfReferral] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const formRef = useRef(null); // Ref for scrolling to top
+  const navigate = useNavigate(); // Hook for navigation
 
   // Initialize CognitoUserPool with cfg prop
   const userPool = new CognitoUserPool(cfg);
 
+  // Redirect to /signin after 3 seconds on successful sign-up
+  useEffect(() => {
+    const loginUrl = cfg.loginUrl;
+    console.log('Test: ',success)
+    if (success) {
+      const timer = setTimeout(() => {
+        window.location.replace(loginUrl);
+      }, 3000); // 3-second delay
+      return () => clearTimeout(timer); // Cleanup timer on unmount
+    }
+  }, [success, navigate]);
+
   // Scroll to top when error or success state changes
+  /*
   useEffect(() => {
     if ((error || success) && formRef.current) {
       formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [error, success]);
+  }, [error, success]);*/
 
   // Load reCAPTCHA v3 script
   useEffect(() => {
     const siteKey = cfg.recaptchaSiteKey;
     if (!siteKey) {
-      console.error('reCAPTCHA site key is missing. Please set REACT_APP_RECAPTCHA_SITE_KEY in environment variables.');
+      console.error('reCAPTCHA site key is missing.');
       return;
     }
     const script = document.createElement('script');
@@ -50,13 +66,25 @@ const SignUp = ({ cfg }) => {
     return e164Regex.test(phone);
   };
 
+  // Handle multi-select change for thematic interest
+  //const handleThematicInterestChange = (e) => {
+  //  const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
+  //  setThematicInterest(selectedOptions);
+  //};
+
+  // Handle multi-select change for country
+  //const handleCountryChange = (e) => {
+  //  const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
+  //  setCountry(selectedOptions);
+  //};
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
     // Validate required fields
-    if (!email || !password || !givenName || !familyName || !organisation || !gender || !ageCategory || !phoneNumber || !organisationType || !thematicInterest || !country || !sourceOfReferral) {
+    if (!email || !password || !givenName || !familyName || !organisation || !gender || !ageCategory || !phoneNumber || !organisationType || !thematicInterest.length || !country.length || !sourceOfReferral) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -91,6 +119,10 @@ const SignUp = ({ cfg }) => {
               // Backend would call https://www.google.com/recaptcha/api/siteverify
               // Check score >= 0.5 and action === 'signup'
 
+              // Format thematicInterest as comma-separated string for Cognito
+              const thematicInterestString = thematicInterest.join(',');
+              const countryString = country.join(',');
+
               const attributeList = [
                 { Name: 'given_name', Value: givenName },
                 { Name: 'family_name', Value: familyName },
@@ -99,17 +131,20 @@ const SignUp = ({ cfg }) => {
                 { Name: 'phone_number', Value: phoneNumber },
                 { Name: 'custom:organisation', Value: organisation },
                 { Name: 'custom:organisation_type', Value: organisationType },
-                { Name: 'custom:thematic_interest', Value: thematicInterest },
-                { Name: 'custom:country', Value: country },
+                { Name: 'custom:thematic_interest', Value: thematicInterestString },
+                { Name: 'custom:country', Value: countryString },
                 { Name: 'custom:source_of_referral', Value: sourceOfReferral },
               ];
+
+              console.log('Thematic: ', thematicInterestString)
+              console.log('Country: ', countryString)
 
               userPool.signUp(email, password, attributeList, null, (err, result) => {
                 if (err) {
                   setError(err.message || 'An error occurred during sign-up.');
                   return;
                 }
-                setSuccess('Sign-up successful! Please check your email for verification.');
+                setSuccess('Sign-up successful! Please check your email for verification. Redirecting to login in 3 seconds...');
               });
             });
         });
@@ -161,7 +196,6 @@ const SignUp = ({ cfg }) => {
   // Options for thematic interest
   // Agriculture / Food Security, Automated land cover mapping, Biodiversity Conservation, Crop Monitoring, Land Degradation, Precision Agriculture, Urban Expansion, Urban Planning, Urbanisation, Water Management, Water Resources Management, Wetlands
   const thematicInterestOptions = [
-    { value: '', label: 'Select thematic interest' },
     { value: 'Agriculture / Food Security', label: 'Agriculture / Food Security' },
     { value: 'Automated Land Cover Mapping', label: 'Automated Land Cover Mapping' },
     { value: 'Biodiversity Conservation', label: 'Biodiversity Conservation' },
@@ -179,7 +213,6 @@ const SignUp = ({ cfg }) => {
 
   // Options for Country dropdown
   const countryOptions = [
-    { value: '', label: 'Select country' },
     { value: 'Afghanistan', label: 'Afghanistan' },
     { value: 'Albania', label: 'Albania' },
     { value: 'Algeria', label: 'Algeria' },
@@ -391,8 +424,6 @@ const SignUp = ({ cfg }) => {
   return (
     <div className="signup-container" ref={formRef}>
       <h2>Create Your Account</h2>
-      {error && <p className="error-message" aria-live="polite">{error}</p>}
-      {success && <p className="success-message" aria-live="polite">{success}</p>}
       <form onSubmit={handleSubmit}>
         <div className="form-section">
           <h3>Personal Information</h3>
@@ -473,24 +504,30 @@ const SignUp = ({ cfg }) => {
           <h3>Interests and Location</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label>Thematic Interest *</label>
-              <select value={thematicInterest} onChange={(e) => setThematicInterest(e.target.value)} required>
-                {thematicInterestOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <label>Thematic Interest * (Select one or more)</label>
+              <Select
+                isMulti
+                options={thematicInterestOptions}
+                value={thematicInterestOptions.filter(option => thematicInterest.includes(option.value))}
+                onChange={(selected) => setThematicInterest(selected ? selected.map(opt => opt.value) : [])}
+                className="multi-select"
+                classNamePrefix="select"
+                placeholder="Select one or more..."
+                required
+              />
             </div>
             <div className="form-group">
-              <label>Country *</label>
-              <select value={country} onChange={(e) => setCountry(e.target.value)} required>
-                {countryOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              <label>Country * (Select one or more)</label>
+              <Select
+                isMulti
+                options={countryOptions}
+                value={countryOptions.filter(option => country.includes(option.value))}
+                onChange={(selected) => setCountry(selected ? selected.map(opt => opt.value) : [])}
+                className="multi-select"
+                classNamePrefix="select"
+                placeholder="Select one or more..."
+                required
+              />
             </div>
             <div className="form-group">
               <label>How did you hear about DE Africa? *</label>
@@ -504,6 +541,8 @@ const SignUp = ({ cfg }) => {
             </div>
           </div>
         </div>
+        {error && <p className="error-message" aria-live="polite">{error}</p>}
+        {success && <p className="success-message" aria-live="polite">{success}</p>}
         <button type="submit">Create Account</button>
       </form>
     </div>

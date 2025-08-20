@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import SignUp from "./components/SignUp";
 import logo from './assets/DE_Africa_Logo_Primary_RGB_1.png';
 import './App.css';
@@ -33,6 +33,7 @@ export default function App() {
         <main>
           <Routes>
             <Route path="/signup" element={<SignUp cfg={cfg} />} />
+            <Route path="*" element={<Navigate to="/signup" replace />} />
           </Routes>
         </main>
         <footer>
