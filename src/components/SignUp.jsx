@@ -423,21 +423,22 @@ const SignUp = ({ cfg }) => {
 
   return (
     <div className="signup-container" ref={formRef}>
-      <h2>Create Your Account</h2>
+      <h2>Create Your DE Africa Sandbox Account</h2>
+      <center><h4>All fields are required</h4></center>
       <form onSubmit={handleSubmit}>
         <div className="form-section">
           <h3>Personal Information</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label>Given Name *</label>
+              <label>Given Name</label>
               <input type="text" value={givenName} onChange={(e) => setGivenName(e.target.value)} required />
             </div>
             <div className="form-group">
-              <label>Family Name *</label>
+              <label>Family Name</label>
               <input type="text" value={familyName} onChange={(e) => setFamilyName(e.target.value)} required />
             </div>
             <div className="form-group">
-              <label>Gender *</label>
+              <label>Gender</label>
               <select value={gender} onChange={(e) => setGender(e.target.value)} required>
                 {genderOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -447,7 +448,7 @@ const SignUp = ({ cfg }) => {
               </select>
             </div>
             <div className="form-group">
-              <label>Age Category *</label>
+              <label>Age Category</label>
               <select value={ageCategory} onChange={(e) => setAgeCategory(e.target.value)} required>
                 {ageCategoryOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -462,16 +463,25 @@ const SignUp = ({ cfg }) => {
           <h3>Contact Information</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label>Email *</label>
+              <label>Email</label>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="form-group">
-              <label>Password *</label>
+              <label>
+                Password
+                <span className="tooltip">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
+                    <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                    <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
+                  </svg>
+                  <span className="tooltip-text">Password policy: Minimum length 8 characters. Require: numbers, lowercase, uppercase.</span>
+                </span>
+              </label>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
             <div className="form-group">
               <label>
-                Phone Number *
+                Phone Number
                 <span className="tooltip">
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
                     <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
@@ -494,11 +504,11 @@ const SignUp = ({ cfg }) => {
           <h3>Organisation Details</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label>Organisation *</label>
+              <label>Organisation</label>
               <input type="text" value={organisation} onChange={(e) => setOrganisation(e.target.value)} required />
             </div>
             <div className="form-group">
-              <label>Organisation Type *</label>
+              <label>Organisation Type</label>
               <select value={organisationType} onChange={(e) => setOrganisationType(e.target.value)} required>
                 {organisationTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -513,7 +523,7 @@ const SignUp = ({ cfg }) => {
           <h3>Interests and Location</h3>
           <div className="form-grid">
             <div className="form-group">
-              <label>Thematic Interest *</label>
+              <label>Thematic Interest</label>
               <Select
                 isMulti
                 options={thematicInterestOptions}
@@ -526,7 +536,7 @@ const SignUp = ({ cfg }) => {
               />
             </div>
             <div className="form-group">
-              <label>Country *</label>
+              <label>Country</label>
               <Select
                 isMulti
                 options={countryOptions}
@@ -539,7 +549,7 @@ const SignUp = ({ cfg }) => {
               />
             </div>
             <div className="form-group">
-              <label>How did you hear about DE Africa? *</label>
+              <label>How did you hear about DE Africa?</label>
               <select value={sourceOfReferral} onChange={(e) => setSourceOfReferral(e.target.value)} required>
                 {sourceOfReferralOptions.map((option) => (
                   <option key={option.value} value={option.value}>
