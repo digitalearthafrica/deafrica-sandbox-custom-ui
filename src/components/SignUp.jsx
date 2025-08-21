@@ -24,14 +24,14 @@ const SignUp = ({ cfg }) => {
   // Initialize CognitoUserPool with cfg prop
   const userPool = new CognitoUserPool(cfg);
 
-  // Redirect to /signin after 3 seconds on successful sign-up
+  // Redirect to /signin after 5 seconds on successful sign-up
   useEffect(() => {
     const loginUrl = cfg.loginUrl;
     console.log('Test: ',success)
     if (success) {
       const timer = setTimeout(() => {
         window.location.replace(loginUrl);
-      }, 3000); // 3-second delay
+      }, 5000); // 5-second delay
       return () => clearTimeout(timer); // Cleanup timer on unmount
     }
   }, [success, navigate]);
@@ -144,7 +144,7 @@ const SignUp = ({ cfg }) => {
                   setError(err.message || 'An error occurred during sign-up.');
                   return;
                 }
-                setSuccess('Sign-up successful! Please check your email for verification. Redirecting to login in 3 seconds...');
+                setSuccess('Sign-up successful! Please check your email for verification. Redirecting to login in 5 seconds...');
               });
             });
         });
@@ -415,7 +415,7 @@ const SignUp = ({ cfg }) => {
     { value: '', label: 'Select referral source' },
     { value: 'Conference', label: 'Conference' },
     { value: 'Google search', label: 'Google search' },
-    { value: 'Previous user', label: 'Previous user' },
+    { value: 'I am an existing user', label: 'I am an existing user' },
     { value: 'Training event', label: 'Training event' },
     { value: 'Word of mouth', label: 'Word of mouth' },
     { value: 'Other', label: 'Other' },
