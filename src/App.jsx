@@ -34,7 +34,7 @@ export default function App() {
         <main>
           <Routes>
             <Route path="/signup" element={<SignUp cfg={cfg} />} />
-            <Route path="/verify-phone" element={<VerifyPhone />} />
+            <Route path="/verify-phone" element={<VerifyPhone cfg={cfg} />} />
             <Route path="*" element={<Navigate to="/signup" replace />} />
           </Routes>
         </main>

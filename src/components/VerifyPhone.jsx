@@ -12,7 +12,7 @@ export default function VerifyPhone({ cfg }) {
   const location = useLocation();
 
   // username passed from signup
-  const username = location.state?.username;
+  const username = location.state?.username || sessionStorage.getItem("username");
 
   if (!username) {
     return <div>No username provided. Please go back to signup.</div>;

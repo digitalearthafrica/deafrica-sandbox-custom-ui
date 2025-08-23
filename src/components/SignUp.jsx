@@ -149,9 +149,10 @@ const SignUp = ({ cfg }) => {
                 const cognitoUser = result.user;
                 console.log("Signup success:", cognitoUser.getUsername());
                 setSuccess('Sign-up successful! Please check your email for a verification link and enter the SMS code sent to your phone number. You will be redirected shortly to complete phone verification.');
+                sessionStorage.setItem("username", cognitoUser.getUsername());
                 setTimeout(() => {
                   navigate("/verify-phone", { state: { username: cognitoUser.getUsername() } });
-                }, 3000);
+                }, 5000);
               });
             });
         });
