@@ -14,14 +14,26 @@ export default function VerifyPhone({ cfg }) {
   // username passed from signup
   const username = location.state?.username || sessionStorage.getItem("username");
 
+  if (!cfg) {
+    return <div>Loading configuration…</div>;
+  }
+
   if (!username) {
     return <div>No username provided. Please go back to signup.</div>;
   }
 
-  const userPool = cognitoConfig(cfg);
+  let userPool;
+  try {
+    userPool = cognitoConfig(cfg);
+  } catch (e) {
+    console.error("Cognito config error:", e);
+    return <div>Configuration error. Please contact support.</div>;
+  }
 
   const handleVerify = (e) => {
     e.preventDefault();
+    setError("");
+    setSuccess("");
 
     const cognitoUser = new CognitoUser({
       Username: username,
@@ -35,7 +47,7 @@ export default function VerifyPhone({ cfg }) {
         return;
       }
       console.log("Phone verification result:", result);
-      setSuccess("Phone verified successfully! Redirecting to login…");
+      setSuccess("✅ Phone verified successfully! Redirecting to login…");
 
       setTimeout(() => {
         window.location.replace(cfg.loginUrl); // redirect to Cognito Hosted UI login
@@ -50,7 +62,7 @@ export default function VerifyPhone({ cfg }) {
     });
 
     cognitoUser.getAttributeVerificationCode("phone_number", {
-      onSuccess: () => setSuccess("A new SMS code has been sent to your phone."),
+      onSuccess: () => setSuccess("📩 A new SMS code has been sent to your phone."),
       onFailure: (err) => setError(err.message || "Could not resend code. Try again."),
     });
   };
@@ -59,8 +71,8 @@ export default function VerifyPhone({ cfg }) {
     <div className="verify-container">
       <h2>Verify Your Phone Number</h2>
       <p>
-        Your email verification link has been sent.
-        Now, please enter the SMS code sent to your phone number to complete the sign-up process.
+        ✅ email verification link has been sent.
+        📱 Now, please enter the SMS code sent to your phone number to complete the sign-up process.
       </p>
       <form onSubmit={handleVerify}>
         <input
