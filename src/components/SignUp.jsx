@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CognitoUserPool } from 'amazon-cognito-identity-js';
+import { CognitoUserPool, CognitoUserAttribute } from "amazon-cognito-identity-js";
 import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 
@@ -26,7 +26,7 @@ const SignUp = ({ cfg }) => {
   const userPool = new CognitoUserPool(cfg);
 
   // Redirect to /signin after 5 seconds on successful sign-up
-  useEffect(() => {
+/*   useEffect(() => {
     const loginUrl = cfg.loginUrl;
     console.log('Test: ',success)
     if (success) {
@@ -35,7 +35,7 @@ const SignUp = ({ cfg }) => {
       }, 5000); // 5-second delay
       return () => clearTimeout(timer); // Cleanup timer on unmount
     }
-  }, [success, navigate]);
+  }, [success, navigate]); */
 
   // Scroll to top when error or success state changes
   /*
@@ -104,7 +104,7 @@ const SignUp = ({ cfg }) => {
     }
     if (window.grecaptcha) {
       try {
-        await window.grecaptcha.ready(() => {
+        window.grecaptcha.ready(() => {
           window.grecaptcha
             .execute(siteKey, { action: 'signup' }) // Replace with your v3 site key
             .then((token) => {
@@ -125,17 +125,17 @@ const SignUp = ({ cfg }) => {
               const countryString = country.join(',');
 
               const attributeList = [
-                { Name: 'given_name', Value: givenName },
-                { Name: 'family_name', Value: familyName },
-                { Name: 'gender', Value: gender },
-                { Name: 'custom:age_category', Value: ageCategory },
-                { Name: 'phone_number', Value: phoneNumber },
-                { Name: 'custom:organisation', Value: organisation },
-                { Name: 'custom:organisation_type', Value: organisationType },
-                { Name: 'custom:thematic_interest', Value: thematicInterestString },
-                { Name: 'custom:country', Value: countryString },
-                { Name: 'custom:timeframe', Value: timeframe },
-                { Name: 'custom:source_of_referral', Value: sourceOfReferral },
+                new CognitoUserAttribute({ Name: 'given_name', Value: givenName }),
+                new CognitoUserAttribute({ Name: 'family_name', Value: familyName }),
+                new CognitoUserAttribute({ Name: 'gender', Value: gender }),
+                new CognitoUserAttribute({ Name: 'custom:age_category', Value: ageCategory }),
+                new CognitoUserAttribute({ Name: 'phone_number', Value: phoneNumber }),
+                new CognitoUserAttribute({ Name: 'custom:organisation', Value: organisation }),
+                new CognitoUserAttribute({ Name: 'custom:organisation_type', Value: organisationType }),
+                new CognitoUserAttribute({ Name: 'custom:thematic_interest', Value: thematicInterestString }),
+                new CognitoUserAttribute({ Name: 'custom:country', Value: countryString }),
+                new CognitoUserAttribute({ Name: 'custom:timeframe', Value: timeframe }),
+                new CognitoUserAttribute({ Name: 'custom:source_of_referral', Value: sourceOfReferral }),
               ];
 
               console.log('Thematic: ', thematicInterestString)
@@ -146,7 +146,13 @@ const SignUp = ({ cfg }) => {
                   setError(err.message || 'An error occurred during sign-up.');
                   return;
                 }
-                setSuccess('Sign-up successful! Please check your email for verification. Redirecting to login in 5 seconds...');
+                const cognitoUser = result.user;
+                console.log("Signup success:", cognitoUser.getUsername());
+                setSuccess('Sign-up successful! Please check your email for a verification link and enter the SMS code sent to your phone number. You will be redirected shortly to complete phone verification.');
+                sessionStorage.setItem("username", cognitoUser.getUsername());
+                setTimeout(() => {
+                  navigate("/verify-phone", { state: { username: cognitoUser.getUsername() } });
+                }, 5000);
               });
             });
         });
