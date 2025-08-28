@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CognitoUserPool } from 'amazon-cognito-identity-js';
+import { CognitoUserPool, CognitoUser } from 'amazon-cognito-identity-js';
 import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 
@@ -19,31 +19,14 @@ const SignUp = ({ cfg }) => {
   const [sourceOfReferral, setSourceOfReferral] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [verificationCode, setVerificationCode] = useState('');
+  const [showVerification, setShowVerification] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const formRef = useRef(null); // Ref for scrolling to top
   const navigate = useNavigate(); // Hook for navigation
 
   // Initialize CognitoUserPool with cfg prop
   const userPool = new CognitoUserPool(cfg);
-
-  // Redirect to /signin after 5 seconds on successful sign-up
-  useEffect(() => {
-    const loginUrl = cfg.loginUrl;
-    console.log('Test: ',success)
-    if (success) {
-      const timer = setTimeout(() => {
-        window.location.replace(loginUrl);
-      }, 5000); // 5-second delay
-      return () => clearTimeout(timer); // Cleanup timer on unmount
-    }
-  }, [success, navigate]);
-
-  // Scroll to top when error or success state changes
-  /*
-  useEffect(() => {
-    if ((error || success) && formRef.current) {
-      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [error, success]);*/
 
   // Load reCAPTCHA v3 script
   useEffect(() => {
@@ -66,18 +49,6 @@ const SignUp = ({ cfg }) => {
     const e164Regex = /^\+[1-9]\d{1,14}$/;
     return e164Regex.test(phone);
   };
-
-  // Handle multi-select change for thematic interest
-  //const handleThematicInterestChange = (e) => {
-  //  const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
-  //  setThematicInterest(selectedOptions);
-  //};
-
-  // Handle multi-select change for country
-  //const handleCountryChange = (e) => {
-  //  const selectedOptions = Array.from(e.target.selectedOptions).map(option => option.value);
-  //  setCountry(selectedOptions);
-  //};
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -106,19 +77,12 @@ const SignUp = ({ cfg }) => {
       try {
         await window.grecaptcha.ready(() => {
           window.grecaptcha
-            .execute(siteKey, { action: 'signup' }) // Replace with your v3 site key
+            .execute(siteKey, { action: 'signup' })
             .then((token) => {
-              // Client-side token check (not secure; use for basic validation)
               if (!token) {
                 setError('reCAPTCHA verification failed. Please try again.');
                 return;
               }
-
-              // For client-side, proceed with token (less secure)
-              // For server-side verification, send token to backend here
-              // Example: fetch('/verify-recaptcha', { method: 'POST', body: JSON.stringify({ token }) })
-              // Backend would call https://www.google.com/recaptcha/api/siteverify
-              // Check score >= 0.5 and action === 'signup'
 
               // Format thematicInterest as comma-separated string for Cognito
               const thematicInterestString = thematicInterest.join(',');
@@ -138,15 +102,86 @@ const SignUp = ({ cfg }) => {
                 { Name: 'custom:source_of_referral', Value: sourceOfReferral },
               ];
 
-              console.log('Thematic: ', thematicInterestString)
-              console.log('Country: ', countryString)
-
               userPool.signUp(email, password, attributeList, null, (err, result) => {
                 if (err) {
                   setError(err.message || 'An error occurred during sign-up.');
                   return;
                 }
-                setSuccess('Sign-up successful! Please check your email for verification. Redirecting to login in 5 seconds...');
+                setSuccess('Sign-up successful! Please check your phone for verification code.');
+                setShowVerification(true);
+              });
+            });
+        });
+      } catch (err) {
+        setError('reCAPTCHA error. Please try again.');
+      }
+    } else {
+      setError('reCAPTCHA not loaded. Please refresh the page.');
+    }
+  };
+
+  const handleVerificationSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    // Validate required fields
+    if (!verificationCode) {
+      setError('Please enter the verification code.');
+      return;
+    }
+
+    const user = new CognitoUser({
+      Username: email,
+      Pool: userPool,
+    });
+
+    user.confirmRegistration(verificationCode, true, (err, result) => {
+      if (err) {
+        setError(err.message || 'An error occurred during verification.');
+        return;
+      }
+      setSuccess('Verification successful! Redirecting to login in 5 seconds...');
+      setIsVerified(true);
+      setTimeout(() => {
+        window.location.replace(cfg.loginUrl);
+      }, 5000); // 5-second delay after successful verification
+    });
+  };
+
+  const handleResendCode = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    // Execute reCAPTCHA v3 for resend action
+    const siteKey = cfg.recaptchaSiteKey;
+    if (!siteKey) {
+      setError('reCAPTCHA configuration error. Please refresh the page.');
+      return;
+    }
+    if (window.grecaptcha) {
+      try {
+        await window.grecaptcha.ready(() => {
+          window.grecaptcha
+            .execute(siteKey, { action: 'resend_code' })
+            .then((token) => {
+              if (!token) {
+                setError('reCAPTCHA verification failed. Please try again.');
+                return;
+              }
+
+              const user = new CognitoUser({
+                Username: email,
+                Pool: userPool,
+              });
+
+              user.resendConfirmationCode((err, result) => {
+                if (err) {
+                  setError(err.message || 'Failed to resend verification code.');
+                  return;
+                }
+                setSuccess('Verification code resent successfully! Please check your phone.');
               });
             });
         });
@@ -181,7 +216,6 @@ const SignUp = ({ cfg }) => {
   ];
 
   // Options for organisation type
-  // Academic Institution, Government, Implementing Partner, Non-government Organisation (NGO), Intergovernmental Organisation (IGO), Private Sector, Technical Partner, UN Agency
   const organisationTypeOptions = [
     { value: '', label: 'Select organisation type' },
     { value: 'Academic Institution', label: 'Academic Institution' },
@@ -196,7 +230,6 @@ const SignUp = ({ cfg }) => {
   ];
 
   // Options for thematic interest
-  // Agriculture / Food Security, Automated land cover mapping, Biodiversity Conservation, Crop Monitoring, Land Degradation, Precision Agriculture, Urban Expansion, Urban Planning, Urbanisation, Water Management, Water Resources Management, Wetlands
   const thematicInterestOptions = [
     { value: 'Agriculture / Food Security', label: 'Agriculture / Food Security' },
     { value: 'Automated Land Cover Mapping', label: 'Automated Land Cover Mapping' },
@@ -228,6 +261,7 @@ const SignUp = ({ cfg }) => {
     { value: 'Chad', label: 'Chad' },
     { value: 'Comoros', label: 'Comoros' },
     { value: 'Congo', label: 'Congo' },
+    { value: 'Côte d’Ivoire', label: 'Côte d’Ivoire' },
     { value: 'Democratic Republic of the Congo', label: 'Democratic Republic of the Congo' },
     { value: 'Djibouti', label: 'Djibouti' },
     { value: 'Egypt', label: 'Egypt' },
@@ -240,7 +274,6 @@ const SignUp = ({ cfg }) => {
     { value: 'Ghana', label: 'Ghana' },
     { value: 'Guinea', label: 'Guinea' },
     { value: 'Guinea-Bissau', label: 'Guinea-Bissau' },
-    { value: 'Ivory Coast', label: 'Ivory Coast' },
     { value: 'Kenya', label: 'Kenya' },
     { value: 'Lesotho', label: 'Lesotho' },
     { value: 'Liberia', label: 'Liberia' },
@@ -269,7 +302,7 @@ const SignUp = ({ cfg }) => {
     { value: 'Tunisia', label: 'Tunisia' },
     { value: 'Uganda', label: 'Uganda' },
     { value: 'Zambia', label: 'Zambia' },
-    { value: 'Zimbabwe', label: 'Zimbabwe' }
+    { value: 'Zimbabwe', label: 'Zimbabwe' },
   ];
 
   // Options for Timeframe
@@ -298,117 +331,118 @@ const SignUp = ({ cfg }) => {
     <div className="signup-container" ref={formRef}>
       <h2>Create Your DE Africa Sandbox Account</h2>
       <center><h4>All fields are required</h4></center>
-      <form onSubmit={handleSubmit}>
-        <div className="form-section">
-          <h3>Personal Information</h3>
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Given Name</label>
-              <input type="text" value={givenName} onChange={(e) => setGivenName(e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label>Family Name</label>
-              <input type="text" value={familyName} onChange={(e) => setFamilyName(e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label>Gender</label>
-              <select value={gender} onChange={(e) => setGender(e.target.value)} required>
-                {genderOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Age Category</label>
-              <select value={ageCategory} onChange={(e) => setAgeCategory(e.target.value)} required>
-                {ageCategoryOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-        <div className="form-section">
-          <h3>Contact Information</h3>
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label>
-                Password
-                <span className="tooltip">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
-                    <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-                    <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
-                  </svg>
-                  <span className="tooltip-text">Password policy: Minimum length 8 characters. Require: numbers, lowercase, uppercase.</span>
-                </span>
-              </label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label>
-                Phone Number
-                <span className="tooltip">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
-                    <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-                    <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
-                  </svg>
-                  <span className="tooltip-text">Enter your phone number in E.164 format (e.g., +441234567890). The phone number will be used for multi-factor authentication.</span>
-                </span>
-              </label>
-              <input
-                type="tel"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="+441234567890"
-                required
-              />
+      {!showVerification ? (
+        <form onSubmit={handleSubmit}>
+          <div className="form-section">
+            <h3>Personal Information</h3>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Given Name</label>
+                <input type="text" value={givenName} onChange={(e) => setGivenName(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label>Family Name</label>
+                <input type="text" value={familyName} onChange={(e) => setFamilyName(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label>Gender</label>
+                <select value={gender} onChange={(e) => setGender(e.target.value)} required>
+                  {genderOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Age Category</label>
+                <select value={ageCategory} onChange={(e) => setAgeCategory(e.target.value)} required>
+                  {ageCategoryOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="form-section">
-          <h3>Organisation Details</h3>
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Organisation</label>
-              <input type="text" value={organisation} onChange={(e) => setOrganisation(e.target.value)} required />
-            </div>
-            <div className="form-group">
-              <label>Organisation Type</label>
-              <select value={organisationType} onChange={(e) => setOrganisationType(e.target.value)} required>
-                {organisationTypeOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+          <div className="form-section">
+            <h3>Contact Information</h3>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Email</label>
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label>
+                  Password
+                  <span className="tooltip">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
+                      <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                      <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
+                    </svg>
+                    <span className="tooltip-text">Password policy: Minimum length 8 characters. Require: numbers, lowercase, uppercase.</span>
+                  </span>
+                </label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label>
+                  Phone Number
+                  <span className="tooltip">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
+                      <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                      <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
+                    </svg>
+                    <span className="tooltip-text">Enter your phone number in E.164 format (e.g., +441234567890). The phone number will be verified via SMS.</span>
+                  </span>
+                </label>
+                <input
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="+441234567890"
+                  required
+                />
+              </div>
             </div>
           </div>
-        </div>
-        <div className="form-section">
-          <h3>Interests and Location</h3>
-          <div className="form-grid">
-            <div className="form-group">
-              <label>Thematic Interest</label>
-              <Select
-                isMulti
-                options={thematicInterestOptions}
-                value={thematicInterestOptions.filter(option => thematicInterest.includes(option.value))}
-                onChange={(selected) => setThematicInterest(selected ? selected.map(opt => opt.value) : [])}
-                className="multi-select"
-                classNamePrefix="select"
-                placeholder="Select one or more..."
-                required
-              />
+          <div className="form-section">
+            <h3>Organisation Details</h3>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Organisation</label>
+                <input type="text" value={organisation} onChange={(e) => setOrganisation(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label>Organisation Type</label>
+                <select value={organisationType} onChange={(e) => setOrganisationType(e.target.value)} required>
+                  {organisationTypeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
-            <div className="form-group">
+          </div>
+          <div className="form-section">
+            <h3>Interests and Location</h3>
+            <div className="form-grid">
+              <div className="form-group">
+                <label>Thematic Interest</label>
+                <Select
+                  isMulti
+                  options={thematicInterestOptions}
+                  value={thematicInterestOptions.filter((option) => thematicInterest.includes(option.value))}
+                  onChange={(selected) => setThematicInterest(selected ? selected.map((opt) => opt.value) : [])}
+                  className="multi-select"
+                  classNamePrefix="select"
+                  placeholder="Select one or more..."
+                  required
+                />
+              </div>
+              <div className="form-group">
               <label>
                 Locations for analysis
                 <span className="tooltip">
@@ -419,18 +453,18 @@ const SignUp = ({ cfg }) => {
                   <span className="tooltip-text">Intended locations that you wish to access data for.</span>
                 </span>
               </label>
-              <Select
-                isMulti
-                options={countryOptions}
-                value={countryOptions.filter(option => country.includes(option.value))}
-                onChange={(selected) => setCountry(selected ? selected.map(opt => opt.value) : [])}
-                className="multi-select"
-                classNamePrefix="select"
-                placeholder="Select one or more..."
-                required
-              />
-            </div>
-            <div className="form-group">
+                <Select
+                  isMulti
+                  options={countryOptions}
+                  value={countryOptions.filter((option) => country.includes(option.value))}
+                  onChange={(selected) => setCountry(selected ? selected.map((opt) => opt.value) : [])}
+                  className="multi-select"
+                  classNamePrefix="select"
+                  placeholder="Select one or more..."
+                  required
+                />
+              </div>
+              <div className="form-group">
               <label>
                 Timeframe
                 <span className="tooltip">
@@ -438,33 +472,82 @@ const SignUp = ({ cfg }) => {
                     <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
                     <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
                   </svg>
-                  <span className="tooltip-text">*Anticipated timeframe for your use of the Sandbox.</span>
+                  <span className="tooltip-text">Anticipated timeframe for your use of the Sandbox.</span>
                 </span>
               </label>
-            <select value={timeframe} onChange={(e) => setTimeframe(e.target.value)} required>
-              {timeframeOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-            <div className="form-group">
-              <label>How did you hear about DE Africa?</label>
-              <select value={sourceOfReferral} onChange={(e) => setSourceOfReferral(e.target.value)} required>
-                {sourceOfReferralOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                <select value={timeframe} onChange={(e) => setTimeframe(e.target.value)} required>
+                  {timeframeOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label>How did you hear about DE Africa?</label>
+                <select value={sourceOfReferral} onChange={(e) => setSourceOfReferral(e.target.value)} required>
+                  {sourceOfReferralOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
+          {error && (
+            <p className="error-message" aria-live="polite">
+              {error}
+            </p>
+          )}
+          {success && (
+            <p className="success-message" aria-live="polite">
+              {success}
+            </p>
+          )}
+          <button type="submit">Create Account</button>
+        </form>
+      ) : !isVerified ? (
+        <form onSubmit={handleVerificationSubmit}>
+          <div className="form-section">
+            <h3>Verify Your Phone Number</h3>
+            <div className="form-group">
+              <label>Phone Verification Code</label>
+              <input
+                type="text"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+                placeholder="Enter the code sent to your phone"
+                required
+              />
+              <span className="help-text">Check your phone for the SMS verification code.</span>
+              <p>
+                <a href="#" className="resend-link" onClick={handleResendCode}>Resend Code</a>
+              </p>
+            </div>
+            {error && (
+              <p className="error-message" aria-live="polite">
+                {error}
+              </p>
+            )}
+            {success && (
+              <p className="success-message" aria-live="polite">
+                {success}
+              </p>
+            )}
+            <div className="button-group">
+              <button type="submit">Verify</button>
+            </div>
+          </div>
+        </form>
+      ) : (
+        <div className="form-section">
+          <h3>Verification Successful</h3>
+          <p className="success-message" aria-live="polite">
+            {success}
+          </p>
         </div>
-        {error && <p className="error-message" aria-live="polite">{error}</p>}
-        {success && <p className="success-message" aria-live="polite">{success}</p>}
-        <button type="submit">Create Account</button>
-      </form>
+      )}
     </div>
   );
 };
