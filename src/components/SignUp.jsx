@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { CognitoUserPool, CognitoUser} from 'amazon-cognito-identity-js';
+import { CognitoUserPool, CognitoUser } from 'amazon-cognito-identity-js';
 import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 
@@ -77,9 +77,8 @@ const SignUp = ({ cfg }) => {
       try {
         await window.grecaptcha.ready(() => {
           window.grecaptcha
-            .execute(siteKey, { action: 'signup' }) // Replace with your v3 site key
+            .execute(siteKey, { action: 'signup' })
             .then((token) => {
-              // Client-side token check (not secure; use for basic validation)
               if (!token) {
                 setError('reCAPTCHA verification failed. Please try again.');
                 return;
@@ -103,9 +102,6 @@ const SignUp = ({ cfg }) => {
                 { Name: 'custom:source_of_referral', Value: sourceOfReferral },
               ];
 
-              console.log('Thematic: ', thematicInterestString)
-              console.log('Country: ', countryString)
-
               userPool.signUp(email, password, attributeList, null, (err, result) => {
                 if (err) {
                   setError(err.message || 'An error occurred during sign-up.');
@@ -127,6 +123,7 @@ const SignUp = ({ cfg }) => {
   const handleVerificationSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
 
     // Validate required fields
     if (!verificationCode) {
@@ -150,6 +147,50 @@ const SignUp = ({ cfg }) => {
         window.location.replace(cfg.loginUrl);
       }, 5000); // 5-second delay after successful verification
     });
+  };
+
+  const handleResendCode = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    // Execute reCAPTCHA v3 for resend action
+    const siteKey = cfg.recaptchaSiteKey;
+    if (!siteKey) {
+      setError('reCAPTCHA configuration error. Please refresh the page.');
+      return;
+    }
+    if (window.grecaptcha) {
+      try {
+        await window.grecaptcha.ready(() => {
+          window.grecaptcha
+            .execute(siteKey, { action: 'resend_code' })
+            .then((token) => {
+              if (!token) {
+                setError('reCAPTCHA verification failed. Please try again.');
+                return;
+              }
+
+              const user = new CognitoUser({
+                Username: email,
+                Pool: userPool,
+              });
+
+              user.resendConfirmationCode((err, result) => {
+                if (err) {
+                  setError(err.message || 'Failed to resend verification code.');
+                  return;
+                }
+                setSuccess('Verification code resent successfully! Please check your phone.');
+              });
+            });
+        });
+      } catch (err) {
+        setError('reCAPTCHA error. Please try again.');
+      }
+    } else {
+      setError('reCAPTCHA not loaded. Please refresh the page.');
+    }
   };
 
   // Options for Gender dropdown
@@ -261,7 +302,7 @@ const SignUp = ({ cfg }) => {
     { value: 'Tunisia', label: 'Tunisia' },
     { value: 'Uganda', label: 'Uganda' },
     { value: 'Zambia', label: 'Zambia' },
-    { value: 'Zimbabwe', label: 'Zimbabwe' }
+    { value: 'Zimbabwe', label: 'Zimbabwe' },
   ];
 
   // Options for Timeframe
@@ -338,7 +379,7 @@ const SignUp = ({ cfg }) => {
                   <span className="tooltip">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
                       <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-                      <text x="8" y="12" fontSize="12" textAnchor="middle" fill="currentColor">i</text>
+                      <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
                     </svg>
                     <span className="tooltip-text">Password policy: Minimum length 8 characters. Require: numbers, lowercase, uppercase.</span>
                   </span>
@@ -351,7 +392,7 @@ const SignUp = ({ cfg }) => {
                   <span className="tooltip">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
                       <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-                      <text x="8" y="12" fontSize="12" textAnchor="middle" fill="currentColor">i</text>
+                      <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
                     </svg>
                     <span className="tooltip-text">Enter your phone number in E.164 format (e.g., +441234567890). The phone number will be verified via SMS.</span>
                   </span>
@@ -393,8 +434,8 @@ const SignUp = ({ cfg }) => {
                 <Select
                   isMulti
                   options={thematicInterestOptions}
-                  value={thematicInterestOptions.filter(option => thematicInterest.includes(option.value))}
-                  onChange={(selected) => setThematicInterest(selected ? selected.map(opt => opt.value) : [])}
+                  value={thematicInterestOptions.filter((option) => thematicInterest.includes(option.value))}
+                  onChange={(selected) => setThematicInterest(selected ? selected.map((opt) => opt.value) : [])}
                   className="multi-select"
                   classNamePrefix="select"
                   placeholder="Select one or more..."
@@ -415,8 +456,8 @@ const SignUp = ({ cfg }) => {
                 <Select
                   isMulti
                   options={countryOptions}
-                  value={countryOptions.filter(option => country.includes(option.value))}
-                  onChange={(selected) => setCountry(selected ? selected.map(opt => opt.value) : [])}
+                  value={countryOptions.filter((option) => country.includes(option.value))}
+                  onChange={(selected) => setCountry(selected ? selected.map((opt) => opt.value) : [])}
                   className="multi-select"
                   classNamePrefix="select"
                   placeholder="Select one or more..."
@@ -431,7 +472,7 @@ const SignUp = ({ cfg }) => {
                     <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
                     <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
                   </svg>
-                  <span className="tooltip-text">*Anticipated timeframe for your use of the Sandbox.</span>
+                  <span className="tooltip-text">Anticipated timeframe for your use of the Sandbox.</span>
                 </span>
               </label>
                 <select value={timeframe} onChange={(e) => setTimeframe(e.target.value)} required>
@@ -454,8 +495,16 @@ const SignUp = ({ cfg }) => {
               </div>
             </div>
           </div>
-          {error && <p className="error-message" aria-live="polite">{error}</p>}
-          {success && <p className="success-message" aria-live="polite">{success}</p>}
+          {error && (
+            <p className="error-message" aria-live="polite">
+              {error}
+            </p>
+          )}
+          {success && (
+            <p className="success-message" aria-live="polite">
+              {success}
+            </p>
+          )}
           <button type="submit">Create Account</button>
         </form>
       ) : !isVerified ? (
@@ -472,10 +521,23 @@ const SignUp = ({ cfg }) => {
                 required
               />
               <span className="help-text">Check your phone for the SMS verification code.</span>
+              <p>
+                <a href="#" className="resend-link" onClick={handleResendCode}>Resend Code</a>
+              </p>
             </div>
-            {error && <p className="error-message" aria-live="polite">{error}</p>}
-            {success && <p className="success-message" aria-live="polite">{success}</p>}
-            <button type="submit">Verify</button>
+            {error && (
+              <p className="error-message" aria-live="polite">
+                {error}
+              </p>
+            )}
+            {success && (
+              <p className="success-message" aria-live="polite">
+                {success}
+              </p>
+            )}
+            <div className="button-group">
+              <button type="submit">Verify</button>
+            </div>
           </div>
         </form>
       ) : (
