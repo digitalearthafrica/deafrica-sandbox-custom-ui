@@ -6,6 +6,7 @@ import Select from 'react-select';
 const SignUp = ({ cfg }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [givenName, setGivenName] = useState('');
   const [familyName, setFamilyName] = useState('');
   const [gender, setGender] = useState('');
@@ -44,7 +45,7 @@ const SignUp = ({ cfg }) => {
     };
   }, []);
 
-  // E.164 phone number validation (e.g., +12345678901)
+  // E.164 mobile number validation (e.g., +12345678901)
   const validatePhoneNumber = (phone) => {
     const e164Regex = /^\+[1-9]\d{1,14}$/;
     return e164Regex.test(phone);
@@ -56,14 +57,19 @@ const SignUp = ({ cfg }) => {
     setSuccess('');
 
     // Validate required fields
-    if (!email || !password || !givenName || !familyName || !organisation || !gender || !ageCategory || !phoneNumber || !organisationType || !thematicInterest.length || !country.length || !timeframe || !sourceOfReferral) {
+    if (!email || !password || !confirmPassword || !givenName || !familyName || !organisation || !gender || !ageCategory || !phoneNumber || !organisationType || !thematicInterest.length || !country.length || !timeframe || !sourceOfReferral) {
       setError('Please fill in all required fields.');
       return;
     }
 
-    // Validate phone number format
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+
+    // Validate mobile number format
     if (!validatePhoneNumber(phoneNumber)) {
-      setError('Phone number must be in E.164 format (e.g., +441234567890).');
+      setError('Mobile number must be in E.164 format (e.g., +441234567890).');
       return;
     }
 
@@ -375,19 +381,6 @@ const SignUp = ({ cfg }) => {
               </div>
               <div className="form-group">
                 <label>
-                  Password
-                  <span className="tooltip">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
-                      <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-                      <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
-                    </svg>
-                    <span className="tooltip-text">Password policy: Minimum length 8 characters. Require: numbers, lowercase, uppercase.</span>
-                  </span>
-                </label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-              </div>
-              <div className="form-group">
-                <label>
                   Phone Number
                   <span className="tooltip">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
@@ -404,6 +397,23 @@ const SignUp = ({ cfg }) => {
                   placeholder="+441234567890"
                   required
                 />
+              </div>
+              <div className="form-group">
+                <label>
+                  Password
+                  <span className="tooltip">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
+                      <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                      <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
+                    </svg>
+                    <span className="tooltip-text">Password policy: Minimum length 8 characters. Require: numbers, lowercase, uppercase.</span>
+                  </span>
+                </label>
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              </div>
+              <div className="form-group">
+                <label>Confirm Password</label>
+                <input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
               </div>
             </div>
           </div>
@@ -443,16 +453,16 @@ const SignUp = ({ cfg }) => {
                 />
               </div>
               <div className="form-group">
-              <label>
-                Locations for analysis
-                <span className="tooltip">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
-                    <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-                    <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
-                  </svg>
-                  <span className="tooltip-text">Intended locations that you wish to access data for.</span>
-                </span>
-              </label>
+                <label>
+                  Locations for analysis
+                  <span className="tooltip">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
+                      <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                      <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
+                    </svg>
+                    <span className="tooltip-text">Intended locations that you wish to access data for.</span>
+                  </span>
+                </label>
                 <Select
                   isMulti
                   options={countryOptions}
@@ -465,16 +475,16 @@ const SignUp = ({ cfg }) => {
                 />
               </div>
               <div className="form-group">
-              <label>
-                Timeframe
-                <span className="tooltip">
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
-                    <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
-                    <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
-                  </svg>
-                  <span className="tooltip-text">Anticipated timeframe for your use of the Sandbox.</span>
-                </span>
-              </label>
+                <label>
+                  Timeframe
+                  <span className="tooltip">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
+                      <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
+                      <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
+                    </svg>
+                    <span className="tooltip-text">Anticipated timeframe for your use of the Sandbox.</span>
+                  </span>
+                </label>
                 <select value={timeframe} onChange={(e) => setTimeframe(e.target.value)} required>
                   {timeframeOptions.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -510,7 +520,7 @@ const SignUp = ({ cfg }) => {
       ) : !isVerified ? (
         <form onSubmit={handleVerificationSubmit}>
           <div className="form-section">
-            <h3>Verify Your Phone Number</h3>
+            <h3>Verify Your Mobile Number</h3>
             <div className="form-group">
               <label>Phone Verification Code</label>
               <input
@@ -522,7 +532,7 @@ const SignUp = ({ cfg }) => {
               />
               <span className="help-text">Check your phone for the SMS verification code.</span>
               <p>
-                <a href="#" className="resend-link" onClick={handleResendCode}>Resend Code</a>
+                <a href="#" className="resend-link" onClick={handleResendCode}>Didn't receive a code? Resend</a>
               </p>
             </div>
             {error && (
