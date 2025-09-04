@@ -113,7 +113,7 @@ const SignUp = ({ cfg }) => {
                   setError(err.message || 'An error occurred during sign-up.');
                   return;
                 }
-                setSuccess('Sign-up successful! Please check your phone for verification code.');
+                setSuccess('Sign-up successful! Please check your mobile phone for verification code.');
                 setShowVerification(true);
               });
             });
@@ -187,7 +187,7 @@ const SignUp = ({ cfg }) => {
                   setError(err.message || 'Failed to resend verification code.');
                   return;
                 }
-                setSuccess('Verification code resent successfully! Please check your phone.');
+                setSuccess('Verification code resent successfully! Please check your mobile phone.');
               });
             });
         });
@@ -381,13 +381,13 @@ const SignUp = ({ cfg }) => {
               </div>
               <div className="form-group">
                 <label>
-                  Phone Number
+                  Mobile Number
                   <span className="tooltip">
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="var(--text-dark)">
                       <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="1.5"/>
                       <text x="8" y="12" fontSize="11" textAnchor="middle" fill="currentColor">i</text>
                     </svg>
-                    <span className="tooltip-text">Enter your phone number in E.164 format (e.g., +441234567890). The phone number will be verified via SMS.</span>
+                    <span className="tooltip-text">Enter your mobile number in E.164 format (e.g., +441234567890). The mobile number will be verified via SMS.</span>
                   </span>
                 </label>
                 <input
@@ -522,15 +522,15 @@ const SignUp = ({ cfg }) => {
           <div className="form-section">
             <h3>Verify Your Mobile Number</h3>
             <div className="form-group">
-              <label>Phone Verification Code</label>
+              <label>Mobile Phone Verification Code</label>
               <input
                 type="text"
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value)}
-                placeholder="Enter the code sent to your phone"
+                placeholder="Enter the code sent to your mobile phone"
                 required
               />
-              <span className="help-text">Check your phone for the SMS verification code.</span>
+              <span className="help-text">Check your mobile phone for the SMS verification code.</span>
               <p>
                 <a href="#" className="resend-link" onClick={handleResendCode}>Didn't receive a code? Resend</a>
               </p>
